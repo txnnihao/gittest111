@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雷鸣客栈罗马战队 - 成员管理</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        roman: {
+                            gold: '#D4AF37',
+                            red: '#8B0000',
+                            dark: '#1A1A1A',
+                            light: '#F5F5DC', // Beige/parchment color
+                            border: '#B8860B'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Cinzel"', '"Times New Roman"', 'serif'],
+                        sans: ['"Segoe UI"', 'Tahoma', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Optional: Google Fonts for a Roman feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f4f1ea; 
+            background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23dcd0b8" fill-opacity="0.4"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+        }
+        .roman-header {
+            font-family: 'Cinzel', serif;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .parchment-panel {
+            background-color: #fffdf7;
+            border: 2px solid #D4AF37;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1), inset 0 0 20px rgba(212, 175, 55, 0.1);
+        }
+        .table-row-hover:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        /* Custom scrollbar for table body if needed */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #B8860B;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen pb-12">
+    <div id="app">
+        <!-- Header -->
+        <header class="bg-gradient-to-b from-roman-dark to-gray-900 text-white shadow-xl border-b-4 border-roman-gold sticky top-0 z-20">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-5">
+                    <div class="relative">
+                        <img src="logo.png" alt="雷鸣客栈 Logo" class="h-14 w-14 rounded-full object-cover border-2 border-roman-gold shadow-[0_0_15px_rgba(212,175,55,0.5)] bg-roman-dark p-0.5" onerror="this.src='https://via.placeholder.com/150?text=Logo'">
+                    </div>
+                    <h1 class="text-3xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-roman-gold roman-header">雷鸣客栈罗马战队</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button @click="toggleAdmin" :class="isAdmin ? 'bg-roman-red text-white border-roman-gold' : 'bg-transparent text-roman-gold border-roman-gold hover:bg-roman-gold hover:text-roman-dark'" class="px-5 py-2 rounded border-2 font-medium transition duration-300 shadow-sm flex items-center space-x-2">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="font-serif tracking-wide">{{ isAdmin ? '退出统帅模式' : '统帅模式' }}</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+            <!-- Decorative Top -->
+            <div class="flex justify-center mb-6 text-roman-gold opacity-80">
+                <i class="fas fa-sun text-2xl mx-4"></i>
+                <div class="h-0.5 w-64 bg-roman-gold mt-3"></div>
+                <i class="fas fa-sun text-2xl mx-4"></i>
+            </div>
+
+            <!-- Content Panel -->
+            <div class="parchment-panel rounded-lg overflow-hidden">
+                <!-- Toolbar -->
+                <div class="p-5 border-b border-roman-gold bg-opacity-50 bg-yellow-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="relative w-full sm:w-1/2 md:w-80">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-roman-border"></i>
+                        </div>
+                        <input v-model="searchQuery" type="text" placeholder="搜索战队勇士..." class="block w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-md leading-5 bg-white placeholder-gray-400 focus:outline-none focus:border-roman-gold focus:ring-1 focus:ring-roman-gold sm:text-sm transition duration-150 shadow-inner">
+                    </div>
+                    <div v-if="isAdmin" class="flex-shrink-0">
+                        <button @click="openModal()" class="bg-roman-gold hover:bg-yellow-600 text-roman-dark px-6 py-2.5 rounded font-bold shadow-md transition duration-200 flex items-center space-x-2 border border-yellow-700">
+                            <i class="fas fa-user-plus"></i>
+                            <span>招募勇士</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div v-if="loading" class="flex justify-center items-center py-20">
+                    <i class="fas fa-circle-notch fa-spin text-4xl text-roman-gold"></i>
+                </div>
+
+                <!-- Error State -->
+                <div v-else-if="error" class="bg-red-50 border-l-4 border-roman-red text-roman-red p-4 m-4 rounded shadow-sm" role="alert">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <p>{{ error }}</p>
+                    </div>
+                </div>
+
+                <!-- Compact Table -->
+                <div v-else class="overflow-x-auto">
+                    <table class="min-w-full divide-y-2 divide-roman-gold">
+                        <thead class="bg-roman-dark text-roman-gold">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 text-left text-sm font-bold tracking-wider font-serif uppercase w-16">
+                                    <i class="fas fa-hashtag"></i>
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-sm font-bold tracking-wider font-serif uppercase">
+                                    勇士姓名 (Name)
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-sm font-bold tracking-wider font-serif uppercase w-32">
+                                    战力阶级 (Level)
+                                </th>
+                                <th v-if="isAdmin" scope="col" class="px-6 py-4 text-center text-sm font-bold tracking-wider font-serif uppercase w-32">
+                                    军令 (Action)
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-transparent divide-y divide-gray-200">
+                            <tr v-for="(user, index) in filteredUsers" :key="user.id" class="table-row-hover transition-colors duration-150">
+                                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-medium">
+                                    {{ index + 1 }}
+                                </td>
+                                <td class="px-6 py-3 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-8 w-8 rounded-full bg-roman-dark text-roman-gold flex items-center justify-center text-sm font-bold shadow-sm border border-roman-gold mr-3 flex-shrink-0">
+                                            {{ user.name.charAt(0) }}
+                                        </div>
+                                        <div class="text-base font-semibold text-gray-900">{{ user.name }}</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border shadow-sm" :class="getLevelBadgeStyle(user.level)">
+                                        <span class="mr-1.5 flex space-x-0.5">
+                                            <i v-for="n in getStarCount(user.level)" :key="n" class="fas fa-star text-[10px] text-yellow-500" style="text-shadow: 0 0 2px rgba(255,215,0,0.5);"></i>
+                                        </span>
+                                        {{ user.level }}
+                                    </span>
+                                </td>
+                                <td v-if="isAdmin" class="px-6 py-3 whitespace-nowrap text-center text-sm font-medium">
+                                    <button @click="openModal(user)" class="text-blue-600 hover:text-blue-900 mx-2 transition-colors" title="重新指派">
+                                        <i class="fas fa-edit text-lg"></i>
+                                    </button>
+                                    <button @click="confirmDelete(user)" class="text-roman-red hover:text-red-900 mx-2 transition-colors" title="放逐">
+                                        <i class="fas fa-times-circle text-lg"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr v-if="filteredUsers.length === 0">
+                                <td :colspan="isAdmin ? 4 : 3" class="px-6 py-12 text-center text-gray-500">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i class="fas fa-ghost text-4xl text-gray-300 mb-3"></i>
+                                        <p class="text-lg">军团中未找到名为 "<span class="font-bold text-roman-dark">{{ searchQuery }}</span>" 的勇士</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Table Footer/Summary -->
+                <div v-if="!loading && !error" class="bg-gray-50 px-6 py-3 border-t border-roman-gold text-sm text-gray-600 font-medium flex justify-between items-center">
+                    <span>罗马战队总兵力: <span class="font-bold text-roman-dark">{{ filteredUsers.length }}</span> 人</span>
+                    <i class="fas fa-shield-alt text-roman-gold opacity-50 text-xl"></i>
+                </div>
+            </div>
+            
+            <!-- Decorative Bottom -->
+            <div class="flex justify-center mt-6 text-roman-gold opacity-80">
+                <i class="fas fa-sun text-2xl mx-4"></i>
+                <div class="h-0.5 w-64 bg-roman-gold mt-3"></div>
+                <i class="fas fa-sun text-2xl mx-4"></i>
+            </div>
+        </main>
+
+        <!-- Edit/Add Modal -->
+        <transition name="fade">
+            <div v-if="showModal" class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div class="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity backdrop-blur-sm" @click="closeModal"></div>
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                    
+                    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border-2 border-roman-gold">
+                        <!-- Modal Header -->
+                        <div class="bg-roman-dark px-6 py-4 border-b border-roman-gold flex items-center justify-between">
+                            <h3 class="text-xl font-serif font-bold text-roman-gold flex items-center" id="modal-title">
+                                <i class="fas" :class="isEditing ? 'fa-scroll' : 'fa-user-plus'"></i>
+                                <span class="ml-2">{{ isEditing ? '修改勇士档案' : '招募新勇士' }}</span>
+                            </h3>
+                            <button @click="closeModal" class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Modal Body -->
+                        <form @submit.prevent="saveUser">
+                            <div class="bg-yellow-50 px-6 py-6">
+                                <div class="space-y-5">
+                                    <div>
+                                        <label class="block text-sm font-bold text-roman-dark mb-1 font-serif">勇士尊姓大名</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-user text-gray-400"></i>
+                                            </div>
+                                            <input v-model="currentUser.name" type="text" required class="block w-full pl-10 pr-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-roman-gold focus:ring-1 focus:ring-roman-gold bg-white shadow-inner">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold text-roman-dark mb-1 font-serif">评定战力阶级</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-medal text-gray-400"></i>
+                                            </div>
+                                            <select v-model="currentUser.level" required class="block w-full pl-10 pr-10 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-roman-gold focus:ring-1 focus:ring-roman-gold bg-white shadow-inner appearance-none">
+                                                <option value="四顶">四顶 (Top Tier 4)</option>
+                                                <option value="三尾">三尾 (Low Tier 3)</option>
+                                                <option value="三中">三中 (Mid Tier 3)</option>
+                                                <option value="三顶">三顶 (Top Tier 3)</option>
+                                                <option value="二尾">二尾 (Low Tier 2)</option>
+                                                <option value="二中">二中 (Mid Tier 2)</option>
+                                                <option value="二顶">二顶 (Top Tier 2)</option>
+                                            </select>
+                                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                                                <i class="fas fa-chevron-down text-sm"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Modal Footer -->
+                            <div class="bg-gray-100 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                                <button type="button" @click="closeModal" class="px-4 py-2 bg-white border border-gray-300 rounded text-gray-700 hover:bg-gray-50 font-medium shadow-sm transition-colors">
+                                    撤销
+                                </button>
+                                <button type="submit" class="px-6 py-2 bg-roman-dark border border-roman-gold rounded text-roman-gold hover:bg-black font-bold shadow-md transition-colors flex items-center">
+                                    <i class="fas fa-stamp mr-2"></i>
+                                    颁布
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </transition>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const users = ref([]);
+                const searchQuery = ref('');
+                const isAdmin = ref(false);
+                const loading = ref(true);
+                const error = ref(null);
+                
+                // Modal state
+                const showModal = ref(false);
+                const isEditing = ref(false);
+                const currentUser = ref({ id: null, name: '', level: '三中' });
+
+                const API_URL = 'http://localhost:3000/api/users';
+
+                // 尝试从本地存储加载数据，如果没有则使用默认数据
+                const loadLocalData = () => {
+                    const savedData = localStorage.getItem('romanTeamData');
+                    if (savedData) {
+                        users.value = JSON.parse(savedData);
+                    } else {
+                        // 初始默认数据（从您的表格导入）
+                        users.value = [
+                            {"id":1,"name":"吾明","level":"三尾"},
+                            {"id":2,"name":"足坛小子","level":"三尾"},
+                            {"id":3,"name":"猴细力","level":"三尾"},
+                            {"id":4,"name":"小星","level":"三中"},
+                            {"id":5,"name":"泽润恒昌神","level":"三中"},
+                            {"id":6,"name":"杰出青年","level":"三中"},
+                            {"id":7,"name":"冯平","level":"三中"},
+                            {"id":8,"name":"中年选手","level":"三中"},
+                            {"id":9,"name":"cs","level":"三中"},
+                            {"id":10,"name":"奶油果派","level":"三中"},
+                            {"id":11,"name":"布青","level":"三中"},
+                            {"id":12,"name":"安福瘦马","level":"三中"},
+                            {"id":13,"name":"监利菜菜","level":"三中"},
+                            {"id":14,"name":"小菜菜","level":"三中"},
+                            {"id":15,"name":"泡沫","level":"三中"},
+                            {"id":16,"name":"蜗牛","level":"三中"},
+                            {"id":17,"name":"勇者大陆","level":"三中"},
+                            {"id":18,"name":"止水","level":"三中"},
+                            {"id":19,"name":"胖子","level":"三中"},
+                            {"id":20,"name":"青葱","level":"三中"},
+                            {"id":21,"name":"广州菜鸟","level":"三中"},
+                            {"id":22,"name":"林子闲","level":"三中"},
+                            {"id":23,"name":"马夫","level":"三中"},
+                            {"id":24,"name":"Yes","level":"三顶"},
+                            {"id":25,"name":"马哥","level":"三顶"},
+                            {"id":26,"name":"电视","level":"二尾"},
+                            {"id":27,"name":"马小菜","level":"二尾"},
+                            {"id":28,"name":"和哥","level":"二尾"},
+                            {"id":29,"name":"宁德大腿","level":"二尾"},
+                            {"id":30,"name":"金仔","level":"二尾"},
+                            {"id":31,"name":"一点点","level":"二尾"},
+                            {"id":32,"name":"最爱小扒菜","level":"二中"},
+                            {"id":33,"name":"东风吹战鼓擂","level":"二中"}
+                        ];
+                        saveToLocal();
+                    }
+                    loading.value = false;
+                };
+
+                const saveToLocal = () => {
+                    localStorage.setItem('romanTeamData', JSON.stringify(users.value));
+                };
+
+                const fetchUsers = async () => {
+                    loading.value = true;
+                    error.value = null;
+                    try {
+                        // 尝试从本地服务器获取 (兼容本地开发)
+                        const response = await fetch('http://localhost:3000/api/users');
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        users.value = await response.json();
+                        loading.value = false;
+                    } catch (err) {
+                        // 如果连接不上本地服务器（说明部署在静态托管上了），则使用本地存储
+                        console.log('无法连接到本地服务器，切换为纯前端模式');
+                        loadLocalData();
+                    }
+                };
+
+                onMounted(() => {
+                    fetchUsers();
+                });
+
+                const filteredUsers = computed(() => {
+                    let result = users.value;
+                    
+                    if (searchQuery.value) {
+                        const query = searchQuery.value.toLowerCase();
+                        result = result.filter(user => user.name.toLowerCase().includes(query));
+                    }
+
+                    // 1. 定义等级的排序权重（数字越小，排名越靠前）
+                    const levelWeight = {
+                        '四顶': 1,
+                        '三尾': 2,
+                        '三中': 3,
+                        '三顶': 4,
+                        '二尾': 5,
+                        '二中': 6,
+                        '二顶': 7
+                    };
+
+                    // 2. 排序：先按等级权重，再按名字拼音首字母
+                    return result.slice().sort((a, b) => {
+                        const weightA = levelWeight[a.level] || 99; // 未知等级放到最后
+                        const weightB = levelWeight[b.level] || 99;
+                        
+                        if (weightA !== weightB) {
+                            return weightA - weightB; // 等级不同，按等级权重排序
+                        } else {
+                            // 等级相同，使用 localeCompare 按中文拼音进行排序
+                            return a.name.localeCompare(b.name, 'zh-CN');
+                        }
+                    });
+                });
+
+                const toggleAdmin = () => {
+                    if (isAdmin.value) {
+                        // 如果当前是统帅模式，直接退出
+                        isAdmin.value = false;
+                    } else {
+                        // 如果要进入统帅模式，要求输入密码
+                        const password = prompt('请输入统帅密令 (密码):');
+                        if (password === '666888') { // 设置一个默认密码，您可以修改这里
+                            isAdmin.value = true;
+                        } else if (password !== null) {
+                            alert('密令错误！无法动用军权。');
+                        }
+                    }
+                };
+
+                const getLevelBadgeStyle = (level) => {
+                    if (level.includes('顶')) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+                    if (level.includes('中')) return 'bg-blue-50 text-blue-800 border-blue-200';
+                    if (level.includes('尾')) return 'bg-green-50 text-green-800 border-green-200';
+                    return 'bg-gray-100 text-gray-800 border-gray-300';
+                };
+
+                const getStarCount = (level) => {
+                    const stars = {
+                        '四顶': 1,
+                        '三尾': 2,
+                        '三中': 3,
+                        '三顶': 4,
+                        '二尾': 5,
+                        '二中': 6,
+                        '二顶': 7
+                    };
+                    return stars[level] || 1; // 默认给1颗星
+                };
+
+                const openModal = (user = null) => {
+                    if (user) {
+                        isEditing.value = true;
+                        currentUser.value = { ...user };
+                    } else {
+                        isEditing.value = false;
+                        currentUser.value = { id: null, name: '', level: '三中' };
+                    }
+                    showModal.value = true;
+                };
+
+                const closeModal = () => {
+                    showModal.value = false;
+                };
+
+                const saveUser = async () => {
+                    try {
+                        // 检查是否是静态模式
+                        if (users.value.length > 0 || localStorage.getItem('romanTeamData')) {
+                            if (isEditing.value) {
+                                const index = users.value.findIndex(u => u.id === currentUser.value.id);
+                                if (index !== -1) users.value[index] = { ...currentUser.value };
+                            } else {
+                                const newId = users.value.length > 0 ? Math.max(...users.value.map(u => u.id)) + 1 : 1;
+                                users.value.push({ ...currentUser.value, id: newId });
+                            }
+                            saveToLocal();
+                            closeModal();
+                            return;
+                        }
+                        
+                        // 以下为原后端模式代码（防备万一）
+                        const method = isEditing.value ? 'PUT' : 'POST';
+                        const url = isEditing.value ? `${API_URL}/${currentUser.value.id}` : API_URL;
+                        
+                        const response = await fetch(url, {
+                            method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(currentUser.value)
+                        });
+                        
+                        if (!response.ok) throw new Error('军令颁布失败');
+                        
+                        await fetchUsers();
+                        closeModal();
+                    } catch (err) {
+                        alert(err.message);
+                    }
+                };
+
+                const confirmDelete = async (user) => {
+                    if (confirm(`统帅，确定要将勇士 "${user.name}" 从军团中除名吗？此操作不可挽回。`)) {
+                        try {
+                            // 检查是否是静态模式
+                            if (users.value.length > 0 || localStorage.getItem('romanTeamData')) {
+                                users.value = users.value.filter(u => u.id !== user.id);
+                                saveToLocal();
+                                return;
+                            }
+                            
+                            // 以下为原后端模式代码（防备万一）
+                            const response = await fetch(`${API_URL}/${user.id}`, { method: 'DELETE' });
+                            if (!response.ok) throw new Error('放逐失败');
+                            await fetchUsers();
+                        } catch (err) {
+                            alert(err.message);
+                        }
+                    }
+                };
+
+                return {
+                    users, searchQuery, isAdmin, loading, error, filteredUsers,
+                    showModal, isEditing, currentUser,
+                    toggleAdmin, getLevelBadgeStyle, getStarCount, openModal, closeModal, saveUser, confirmDelete
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
